@@ -1,5 +1,6 @@
 package com.concu_augusto_sergio.maquinagalton.modelos;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -8,11 +9,13 @@ public class EstacionDeTrabajo implements Runnable {
     private ComponenteMaquinaGalton componente;
     private int cantidad;
     private AtomicInteger contador;
+    private BlockingQueue<ComponenteMaquinaGalton> bufferCompartido;
 
-    public EstacionDeTrabajo(ComponenteMaquinaGalton componente, int cantidad, AtomicInteger contador) {
+    public EstacionDeTrabajo(ComponenteMaquinaGalton componente, int cantidad, AtomicInteger contador, BlockingQueue<ComponenteMaquinaGalton> bufferCompartido) {
         this.componente = componente;
         this.cantidad = cantidad;
         this.contador = contador;
+        this.bufferCompartido = bufferCompartido;
     }
 
     @Override
@@ -25,8 +28,9 @@ public class EstacionDeTrabajo implements Runnable {
                 // Incrementar el contador atómico
                 int numero = contador.incrementAndGet();
 
-                // Imprimir el componente producido
-                System.out.printf("Componente producido: %s #%d%n", componente, numero);
+                // Añadir el componente al buffer compartido
+                bufferCompartido.put(componente); // Esto bloqueará si el buffer está lleno
+                System.out.printf("Componente producido y añadido al buffer: %s #%d%n", componente, numero);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
