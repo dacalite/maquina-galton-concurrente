@@ -27,7 +27,13 @@ function sample(array: string[]) {
 
 const color = sample(colors) ?? 'yellow'
 
-const TableroGalton = ({ levels }: { levels: number }) => {
+const TableroGalton = ({
+  levels,
+  numDividers,
+}: {
+  levels: number
+  numDividers: number
+}) => {
   const boxRef = useRef(null)
   const canvasRef = useRef(null)
   const ballCount = levels * 100
@@ -142,7 +148,6 @@ const TableroGalton = ({ levels }: { levels: number }) => {
     }
 
     // divider walls
-    const numDividers = levels + 3
     for (let x = 1; x <= numDividers; x++) {
       let divider = wall((x * WIDTH) / numDividers, HEIGHT - 125, 2, 280)
       World.add(engine.world, divider)
