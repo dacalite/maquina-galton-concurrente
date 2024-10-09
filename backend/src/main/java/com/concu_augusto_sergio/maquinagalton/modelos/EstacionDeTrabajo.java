@@ -6,10 +6,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class EstacionDeTrabajo implements Runnable {
 
-    private ComponenteMaquinaGalton componente;
-    private int cantidad;
-    private AtomicInteger contador;
-    private BlockingQueue<ComponenteMaquinaGalton> bufferCompartido;
+    private final ComponenteMaquinaGalton componente;
+    private final int cantidad;
+    private final AtomicInteger contador;
+    private final BlockingQueue<ComponenteMaquinaGalton> bufferCompartido;
 
     public EstacionDeTrabajo(ComponenteMaquinaGalton componente, int cantidad, AtomicInteger contador, BlockingQueue<ComponenteMaquinaGalton> bufferCompartido) {
         this.componente = componente;
