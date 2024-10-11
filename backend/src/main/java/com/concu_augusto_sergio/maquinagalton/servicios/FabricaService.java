@@ -1,8 +1,10 @@
 package com.concu_augusto_sergio.maquinagalton.servicios;
 
+import com.concu_augusto_sergio.maquinagalton.config.Handler;
 import com.concu_augusto_sergio.maquinagalton.modelos.ComponenteMaquinaGalton;
 import com.concu_augusto_sergio.maquinagalton.modelos.EstacionDeTrabajo;
 import com.concu_augusto_sergio.maquinagalton.modelos.LineaDeEnsamblaje;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.*;
@@ -11,14 +13,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class FabricaService {
 
+
     // Contadores atómicos para los componentes
     private final AtomicInteger contadorClavos = new AtomicInteger(0);
     private final AtomicInteger contadorContenedores = new AtomicInteger(0);
     private final AtomicInteger contadorBolas = new AtomicInteger(0);
     private final AtomicInteger contadorTableros = new AtomicInteger(0);
 
+    private final Handler webSocketHandler;
     private final BlockingQueue<ComponenteMaquinaGalton> bufferCompartido = new LinkedBlockingQueue<>(10); // Buffer de tamaño 10
     private ScheduledExecutorService scheduler;
+
+    // Inyección del Handler vía constructor
+
+    public FabricaService(Handler webSocketHandler) {
+        this.webSocketHandler = webSocketHandler;
+    }
+
 
     public void iniciarProduccion(int niveles, int fabricasClavos, int fabricasContenedores, int fabricasBolas) {
         contadorTableros.set(0);
@@ -28,7 +39,7 @@ public class FabricaService {
         scheduler = Executors.newScheduledThreadPool(8);
 
         // Iniciar la línea de ensamblaje
-        new Thread(new LineaDeEnsamblaje(bufferCompartido)).start();
+        new Thread(new LineaDeEnsamblaje(bufferCompartido, webSocketHandler)).start();
 
         // Fase 1: Producir el tablero
         CountDownLatch fase1Latch = new CountDownLatch(1);
