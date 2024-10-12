@@ -21,6 +21,7 @@ const colors = [
   '#4cd964',
 ];
 
+// Función para seleccionar aleatoriamente un color
 function sample(array: string[]) {
   const length = array == null ? 0 : array.length;
   return length ? array[Math.floor(Math.random() * length)] : undefined;
@@ -28,23 +29,171 @@ function sample(array: string[]) {
 
 const color = sample(colors) ?? 'yellow';
 
-const TableroGalton = ({ levels }: { levels: number }) => {
-  const boxRef = useRef(null);
-  const canvasRef = useRef(null);
-  const ballCount = levels * 100;
+// Función que inicializa el motor y la renderización de Matter.js
+const initMatterJs = (
+    {levels, boxRef, canvasRef}: {
+      levels: number,
+        boxRef: React.MutableRefObject<HTMLDivElement | null>,
+        canvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+    }
+) => {
+  const Engine = Matter.Engine;
+  const Render = Matter.Render;
+  const Runner = Matter.Runner;
+  const World = Matter.World;
+  const Bodies = Matter.Bodies;
+  const Body = Matter.Body;
+  const Events = Matter.Events;
 
-  // Integrar WebSocket para recibir mensajes del backend
+  const engine = Engine.create({
+    enableSleeping: true,
+  });
+
+  const render = Render.create({
+    element: boxRef.current as never,
+    engine: engine,
+    canvas: canvasRef.current as never,
+    options: {
+      width: WIDTH,
+      height: HEIGHT,
+      background: BACKGROUND_COLOR,
+      wireframes: false,
+      showSleeping: false,
+    },
+  });
+
+  Render.run(render);
+
+  const runner = Runner.create();
+  Runner.run(runner, engine);
+
+  // Función que crea una bola
+  const ball = (x: number, y: number) =>
+      Bodies.circle(x, y, BALL_SIZE, {
+        restitution: 0.4,
+        friction: 0.00001,
+        frictionAir: 0.042,
+        sleepThreshold: 25,
+        render: {
+          fillStyle: color,
+        },
+      });
+
+  // Función que crea una clavija
+  const peg = (x: number, y: number) =>
+      Bodies.circle(x, y, PEG_SIZE, {
+        isStatic: true,
+        render: {
+          fillStyle: FOREGROUND_COLOR,
+        },
+      });
+
+  // Función que crea una pared
+  const wall = (x: number, y: number, width: number, height: number) =>
+      Bodies.rectangle(x, y, width, height, {
+        isStatic: true,
+        render: {
+          fillStyle: FOREGROUND_COLOR,
+        },
+      });
+
+  const line = (
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+      angle: number
+  ) =>
+      Bodies.rectangle(x, y, width, height, {
+        isStatic: true,
+        angle: angle,
+        render: {
+          fillStyle: FOREGROUND_COLOR,
+        },
+      });
+
+  // outer walls
+  World.add(engine.world, [
+    wall(WIDTH / 2, 0, WIDTH, 20), // top
+    wall(WIDTH / 2, HEIGHT, WIDTH, 20), // bottom
+    wall(0, HEIGHT / 2, 20, HEIGHT), // left
+    wall(WIDTH, HEIGHT / 2, 20, HEIGHT), // right
+  ]);
+
+  // inner walls
+  World.add(engine.world, [
+    line(WIDTH * 0.92, 25, 430, 10, Math.PI * -0.15), // right top
+    line(WIDTH * 0.08, 25, 430, 10, Math.PI * 0.15), // left top
+    line(WIDTH * 0.24, 330, 480, 10, Math.PI * 0.66), // left top
+    line(WIDTH * 0.76, 330, 480, 10, Math.PI * -0.66), // left top
+  ]);
+
+  // Adjust spacing for levels
+  const totalHeightForLevels = HEIGHT * 0.5;
+  const spacingY = totalHeightForLevels / levels;
+  const spacingX = WIDTH / (levels + 1);
+  const pegs = [];
+  for (let i = 0; i < levels; i++) {
+    for (let j = 0; j <= i; j++) {
+      pegs.push(
+          World.add(
+              engine.world,
+              peg(WIDTH / 2 + (j * spacingX - i * (spacingX / 2)), 170 + i * spacingY)
+          )
+      );
+    }
+  }
+
+  // divider walls
+  const numDividers = levels + 3;
+  for (let x = 1; x <= numDividers; x++) {
+    const divider = wall((x * WIDTH) / numDividers, HEIGHT - 125, 2, 280);
+    World.add(engine.world, divider);
+  }
+
+  // Drop balls randomly
+  const rand = (min: number, max: number) => Math.random() * (max - min) + min;
+
+  const dropBall = () => {
+    const droppedBall = ball(WIDTH / 2 + rand(-100, 100), 25);
+    Body.setVelocity(droppedBall, { x: 0, y: 2 });
+    Body.setAngularVelocity(droppedBall, rand(-0.05, 0.05));
+
+    Events.on(droppedBall, 'sleepStart', () => {
+      Body.setStatic(droppedBall, true);
+    });
+
+    World.add(engine.world, droppedBall);
+  };
+
+  return { dropBall };
+};
+
+const TableroGalton = ({ levels }: { levels: number }) => {
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
   useEffect(() => {
+    if (!boxRef.current || !canvasRef.current) {
+      // Asegurarse de que los elementos DOM están montados antes de inicializar Matter.js
+      return;
+    }
+
+    // Inicializar Matter.js
+    const { dropBall } = initMatterJs({ levels, boxRef, canvasRef });
+
+    // WebSocket para recibir mensajes del backend
     const stompClient = new Client({
       brokerURL: 'ws://localhost:8080/ws', // Aquí va tu endpoint WebSocket
-      reconnectDelay: 5000, // Reintentar conexión cada 5 segundos si se cae
+      reconnectDelay: 5000,
       onConnect: () => {
         console.log('Conectado al WebSocket');
 
         // Suscribirse a /topic/production para recibir mensajes de los componentes ensamblados
         stompClient.subscribe('/topic/production', (message) => {
           console.log('Mensaje recibido del servidor:', message.body);
-          // Aquí puedes manejar el mensaje recibido, como mostrar una notificación o actualizar el estado
+          // Aquí puedes manejar el mensaje recibido, como trigger para dropBall o notificación
+          dropBall(); // Llama a dropBall cuando recibes un mensaje del servidor
         });
       },
       onStompError: (error) => {
@@ -52,161 +201,13 @@ const TableroGalton = ({ levels }: { levels: number }) => {
       }
     });
 
-    stompClient.activate(); // Activar conexión
+    stompClient.activate();
 
     // Limpiar la conexión cuando el componente se desmonte
     return () => {
       stompClient.deactivate();
     };
-  }, []); // Solo correr una vez al montar el componente
-
-  // Código original de Matter.js no se modifica
-  useEffect(() => {
-    let Engine = Matter.Engine;
-    let Render = Matter.Render;
-    let Runner = Matter.Runner;
-    let World = Matter.World;
-    let Bodies = Matter.Bodies;
-    let Body = Matter.Body;
-    let Events = Matter.Events;
-
-    let engine = Engine.create({
-      enableSleeping: true,
-    });
-
-    let render = Render.create({
-      element: boxRef.current as any,
-      engine: engine,
-      canvas: canvasRef.current as any,
-      options: {
-        width: WIDTH,
-        height: HEIGHT,
-        background: BACKGROUND_COLOR,
-        wireframes: false,
-        showSleeping: false,
-      },
-    });
-
-    Render.run(render);
-
-    const runner = Runner.create();
-    Runner.run(runner, engine);
-
-    const ball = (x: number, y: number) =>
-        Bodies.circle(x, y, BALL_SIZE, {
-          restitution: 0.4,
-          friction: 0.00001,
-          frictionAir: 0.042,
-          sleepThreshold: 25,
-          render: {
-            fillStyle: color,
-          },
-        });
-
-    const peg = (x: number, y: number) =>
-        Bodies.circle(x, y, PEG_SIZE, {
-          isStatic: true,
-          render: {
-            fillStyle: FOREGROUND_COLOR,
-          },
-        });
-
-    const wall = (x: number, y: number, width: number, height: number) =>
-        Bodies.rectangle(x, y, width, height, {
-          isStatic: true,
-          render: {
-            fillStyle: FOREGROUND_COLOR,
-          },
-        });
-
-    const line = (
-        x: number,
-        y: number,
-        width: number,
-        height: number,
-        angle: number
-    ) =>
-        Bodies.rectangle(x, y, width, height, {
-          isStatic: true,
-          angle: angle,
-          render: {
-            fillStyle: FOREGROUND_COLOR,
-          },
-        });
-
-    // outer walls
-    World.add(engine.world, [
-      wall(WIDTH / 2, 0, WIDTH, 20), // top
-      wall(WIDTH / 2, HEIGHT, WIDTH, 20), // bottom
-      wall(0, HEIGHT / 2, 20, HEIGHT), // left
-      wall(WIDTH, HEIGHT / 2, 20, HEIGHT), // right
-    ]);
-
-    // inner walls (adapted for new size)
-    World.add(engine.world, [
-      line(WIDTH * 0.92, 25, 430, 10, Math.PI * -0.15), // right top
-      line(WIDTH * 0.08, 25, 430, 10, Math.PI * 0.15), // left top
-      line(WIDTH * 0.24, 330, 480, 10, Math.PI * 0.66), // left top
-      line(WIDTH * 0.76, 330, 480, 10, Math.PI * -0.66), // left top
-    ]);
-
-    // Adjust spacing so that the total space for levels is fixed
-    const totalHeightForLevels = HEIGHT * 0.5; // 60% of the total height reserved for levels
-    const spacingY = totalHeightForLevels / levels; // Spacing based on number of levels
-    const spacingX = WIDTH / (levels + 1); // Adjust X spacing based on levels
-    let i, j;
-    const pegs = [];
-    for (i = 0; i < levels; i++) {
-      for (j = 0; j <= i; j++) {
-        pegs.push(
-            World.add(
-                engine.world,
-                peg(
-                    WIDTH / 2 + (j * spacingX - i * (spacingX / 2)),
-                    170 + i * spacingY
-                )
-            )
-        );
-      }
-    }
-
-    // divider walls
-    const numDividers = levels + 3;
-    for (let x = 1; x <= numDividers; x++) {
-      let divider = wall((x * WIDTH) / numDividers, HEIGHT - 125, 2, 280);
-      World.add(engine.world, divider);
-    }
-
-    const rand = (min: number, max: number) => Math.random() * (max - min) + min;
-
-    const dropBall = () => {
-      let droppedBall = ball(WIDTH / 2 + rand(-100, 100), 25);
-
-      Body.setVelocity(droppedBall, {
-        x: 0,
-        y: 2,
-      });
-      Body.setAngularVelocity(droppedBall, rand(-0.05, 0.05));
-
-      Events.on(droppedBall, 'sleepStart', () => {
-        Body.setStatic(droppedBall, true);
-      });
-
-      World.add(engine.world, droppedBall);
-    };
-
-    /* let count = 0;
-    const intervalId = setInterval(function () {
-      if (count === ballCount) {
-        clearInterval(intervalId);
-      }
-
-      dropBall();
-      count++;
-    }, 50);
-
-    return () => clearInterval(intervalId); */
-  }, [WIDTH, HEIGHT, levels]);
+  }, [levels]);
 
   return (
       <div
