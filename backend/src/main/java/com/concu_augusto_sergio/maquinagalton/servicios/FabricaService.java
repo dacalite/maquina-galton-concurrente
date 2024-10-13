@@ -45,7 +45,7 @@ public class FabricaService {
             CountDownLatch fase2Latch = new CountDownLatch(2); // Esperamos 2 componentes
 
             int totalClavos = calcularTotalClavos(niveles);
-            int contenedores = niveles + 1;
+            int contenedores = niveles + 3;
 
             // Encolar tareas de producción de clavos
             int clavosPorFabrica = totalClavos / fabricasClavos;
