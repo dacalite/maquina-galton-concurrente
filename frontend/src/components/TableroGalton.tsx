@@ -184,7 +184,7 @@ const TableroGalton = ({ levels }: { levels: number }) => {
 
     // WebSocket para recibir mensajes del backend
     const stompClient = new Client({
-      brokerURL: 'ws://localhost:8080/ws', // Aquí va tu endpoint WebSocket
+      brokerURL: 'ws://localhost:5173/ws', // Aquí va tu endpoint WebSocket
       reconnectDelay: 5000,
       onConnect: () => {
         console.log('Conectado al WebSocket');
