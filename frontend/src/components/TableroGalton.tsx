@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import Matter from 'matter-js';
+import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs'; // Importar StompJS para WebSocket
 
 const BACKGROUND_COLOR = '#000000';
@@ -28,23 +29,24 @@ function sample(array: string[]) {
 
 const color = sample(colors) ?? 'yellow';
 
-const TableroGalton = ({ levels }: { levels: number }) => {
+const TableroGalton = ({levels, dropBall}: { levels: number, dropBall?: boolean }) => {
   const boxRef = useRef(null);
   const canvasRef = useRef(null);
-  const ballCount = levels * 100;
 
-  // Integrar WebSocket para recibir mensajes del backend
   useEffect(() => {
+    // Integrar SockJS y STOMP para recibir mensajes del backend
+    const socket = new SockJS('http://localhost:8080/ws'); // URL del WebSocket con SockJS
     const stompClient = new Client({
-      brokerURL: 'ws://localhost:8080/ws', // Aquí va tu endpoint WebSocket
+      webSocketFactory: () => socket, // Usar SockJS en lugar de WebSocket directo
       reconnectDelay: 5000, // Reintentar conexión cada 5 segundos si se cae
       onConnect: () => {
-        console.log('Conectado al WebSocket');
+        console.log('Conectado al WebSocket con SockJS');
 
         // Suscribirse a /topic/production para recibir mensajes de los componentes ensamblados
         stompClient.subscribe('/topic/production', (message) => {
           console.log('Mensaje recibido del servidor:', message.body);
-          // Aquí puedes manejar el mensaje recibido, como mostrar una notificación o actualizar el estado
+          // Aquí puedes manejar el mensaje recibido, como trigger para dropBall o notificación
+          dropBall(); // Llama a dropBall cuando recibes un mensaje del servidor
         });
       },
       onStompError: (error) => {
@@ -60,7 +62,6 @@ const TableroGalton = ({ levels }: { levels: number }) => {
     };
   }, []); // Solo correr una vez al montar el componente
 
-  // Código original de Matter.js no se modifica
   useEffect(() => {
     let Engine = Matter.Engine;
     let Render = Matter.Render;
@@ -179,6 +180,7 @@ const TableroGalton = ({ levels }: { levels: number }) => {
 
     const rand = (min: number, max: number) => Math.random() * (max - min) + min;
 
+    // Función para soltar una bola
     const dropBall = () => {
       let droppedBall = ball(WIDTH / 2 + rand(-100, 100), 25);
 
@@ -194,18 +196,6 @@ const TableroGalton = ({ levels }: { levels: number }) => {
 
       World.add(engine.world, droppedBall);
     };
-
-    /* let count = 0;
-    const intervalId = setInterval(function () {
-      if (count === ballCount) {
-        clearInterval(intervalId);
-      }
-
-      dropBall();
-      count++;
-    }, 50);
-
-    return () => clearInterval(intervalId); */
   }, [WIDTH, HEIGHT, levels]);
 
   return (

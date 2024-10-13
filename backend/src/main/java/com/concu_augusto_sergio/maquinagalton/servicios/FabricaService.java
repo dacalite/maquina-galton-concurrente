@@ -1,10 +1,8 @@
 package com.concu_augusto_sergio.maquinagalton.servicios;
-
-import com.concu_augusto_sergio.maquinagalton.config.Handler;
 import com.concu_augusto_sergio.maquinagalton.modelos.ComponenteMaquinaGalton;
 import com.concu_augusto_sergio.maquinagalton.modelos.EstacionDeTrabajo;
 import com.concu_augusto_sergio.maquinagalton.modelos.LineaDeEnsamblaje;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.*;
@@ -13,23 +11,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class FabricaService {
 
-
     // Contadores atómicos para los componentes
     private final AtomicInteger contadorClavos = new AtomicInteger(0);
     private final AtomicInteger contadorContenedores = new AtomicInteger(0);
     private final AtomicInteger contadorBolas = new AtomicInteger(0);
     private final AtomicInteger contadorTableros = new AtomicInteger(0);
 
-    private final Handler webSocketHandler;
     private final BlockingQueue<ComponenteMaquinaGalton> bufferCompartido = new LinkedBlockingQueue<>(10); // Buffer de tamaño 10
     private ScheduledExecutorService scheduler;
 
-    // Inyección del Handler vía constructor
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public FabricaService(Handler webSocketHandler) {
-        this.webSocketHandler = webSocketHandler;
+    public FabricaService(SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
     }
-
 
     public void iniciarProduccion(int niveles, int fabricasClavos, int fabricasContenedores, int fabricasBolas) {
         contadorTableros.set(0);
@@ -39,13 +34,17 @@ public class FabricaService {
         scheduler = Executors.newScheduledThreadPool(8);
 
         // Iniciar la línea de ensamblaje
-        new Thread(new LineaDeEnsamblaje(bufferCompartido, webSocketHandler)).start();
+        new Thread(new LineaDeEnsamblaje(bufferCompartido, messagingTemplate)).start();
+
+        // Notificar inicio de la producción usando STOMP
+        messagingTemplate.convertAndSend("/topic/production", "Inicio de producción.");
 
         // Fase 1: Producir el tablero
         CountDownLatch fase1Latch = new CountDownLatch(1);
         scheduler.submit(() -> {
             new EstacionDeTrabajo(ComponenteMaquinaGalton.TABLERO, 1, contadorTableros, bufferCompartido).run();
             fase1Latch.countDown(); // Indicar que la fase 1 ha terminado
+            messagingTemplate.convertAndSend("/topic/production", "Fase 1 completada: Tablero producido.");
         });
 
         try {
@@ -67,6 +66,7 @@ public class FabricaService {
                     scheduler.submit(() -> {
                         new EstacionDeTrabajo(ComponenteMaquinaGalton.CLAVO, cantidad, contadorClavos, bufferCompartido).run();
                         fase2Latch.countDown(); // Indicar que la producción de clavos ha terminado
+                        messagingTemplate.convertAndSend("/topic/production", "Producción de clavos completada.");
                     });
                 }
             }
@@ -80,6 +80,7 @@ public class FabricaService {
                     scheduler.submit(() -> {
                         new EstacionDeTrabajo(ComponenteMaquinaGalton.CONTENEDOR, cantidad, contadorContenedores, bufferCompartido).run();
                         fase2Latch.countDown(); // Indicar que la producción de contenedores ha terminado
+                        messagingTemplate.convertAndSend("/topic/production", "Producción de contenedores completada.");
                     });
                 }
             }
@@ -96,6 +97,7 @@ public class FabricaService {
                 if (cantidad > 0) {
                     scheduler.submit(() -> {
                         new EstacionDeTrabajo(ComponenteMaquinaGalton.BOLA, cantidad, contadorBolas, bufferCompartido).run();
+                        messagingTemplate.convertAndSend("/topic/production", "Producción de bolas completada.");
                     });
                 }
             }
@@ -105,6 +107,7 @@ public class FabricaService {
         } finally {
             // Cerramos el scheduler
             scheduler.shutdown();
+            messagingTemplate.convertAndSend("/topic/production", "Producción finalizada.");
         }
     }
 

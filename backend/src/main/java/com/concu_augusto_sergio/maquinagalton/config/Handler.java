@@ -45,7 +45,9 @@ public class Handler extends TextWebSocketHandler {
         for (WebSocketSession session : sessions) {
             if (session.isOpen()){
                 session.sendMessage(new TextMessage(mensaje));
+                log.info("Mensaje enviado a la sesión: " + session.getId() + " Mensaje: " + mensaje);
             }
         }
     }
+
 }
