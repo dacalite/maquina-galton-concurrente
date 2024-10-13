@@ -1,21 +1,25 @@
 import { useState } from 'react'
-import { EtapasProduccion } from '../lib/types'
 import lottieFabrica from '../lotties/fabrica.json'
 import lottieVacio from '../lotties/empty.json'
 import Lottie from 'lottie-react'
+import { EtapasProduccion } from '../lib/types'
 
 const MAX_CLAVOS = 4
 const MAX_CONTENEDORES = 4
 const MAX_BOLAS = 8
 
-function ConfiguracionFabrica() {
-  const [etapaProduccion, setEtapaProduccion] = useState<EtapasProduccion>(
-    EtapasProduccion.CONFIGURACION
-  )
-
+function ConfiguracionFabrica({
+  etapaActual,
+  faseActualConstruccion,
+}: {
+  etapaActual: EtapasProduccion
+  faseActualConstruccion: number
+}) {
   const [nClavos, setNClavos] = useState<number>(1)
   const [nContenedores, setNContenedores] = useState<number>(1)
   const [nBolas, setNBolas] = useState<number>(1)
+
+  const isConfiguracion = etapaActual === EtapasProduccion.CONFIGURACION
 
   return (
     <div className='w-full h-full flex flex-col justify-between items-center bg-lime-100 m-7 p-7 rounded-xl'>
@@ -28,7 +32,13 @@ function ConfiguracionFabrica() {
           <Lottie animationData={lottieFabrica} loop={true} className='h-1/2' />
         </div>
       </div>
-      <div className='w-full h-1/4 rounded-xl bg-lime-200 p-4 flex flex-col justify-start items-start gap-2'>
+      <div
+        className={`w-full h-1/4 rounded-xl bg-lime-200 p-4 flex flex-col justify-start items-start gap-2 ${
+          etapaActual === EtapasProduccion.CONSTRUCCION &&
+          faseActualConstruccion === 1 &&
+          'opacity-50'
+        }`}
+      >
         <div className='h-1/5 w-full opacity-60 text-xl flex justify-around relative'>
           <h1 className='absolute left-0'>FASE 2</h1>
           <h1>FÁBRICAS CLAVOS</h1>
@@ -49,7 +59,7 @@ function ConfiguracionFabrica() {
                 animationData={lottieFabrica}
                 loop={true}
                 className='w-32'
-                onClick={() => setNClavos(nClavos - 1)}
+                onClick={() => isConfiguracion && setNClavos(nClavos - 1)}
               />
             ))}
 
@@ -59,7 +69,9 @@ function ConfiguracionFabrica() {
                 animationData={lottieVacio}
                 loop={true}
                 className='w-24 mx-5 opacity-60'
-                onClick={() => setNClavos(nClavos + 1)}
+                onClick={() =>
+                  isConfiguracion && setNClavos((prevNClvos) => prevNClvos + 1)
+                }
               />
             ))}
           </div>
@@ -77,7 +89,9 @@ function ConfiguracionFabrica() {
                 animationData={lottieFabrica}
                 loop={true}
                 className='w-32'
-                onClick={() => setNContenedores(nContenedores - 1)}
+                onClick={() =>
+                  isConfiguracion && setNContenedores(nContenedores - 1)
+                }
               />
             ))}
 
@@ -88,14 +102,25 @@ function ConfiguracionFabrica() {
                   animationData={lottieVacio}
                   loop={true}
                   className='w-24 mx-5 opacity-60'
-                  onClick={() => setNContenedores(nContenedores + 1)}
+                  onClick={() =>
+                    isConfiguracion &&
+                    setNContenedores(
+                      (prevNContenedores) => prevNContenedores + 1
+                    )
+                  }
                 />
               )
             )}
           </div>
         </div>
       </div>
-      <div className='w-full h-1/4 rounded-xl bg-lime-200 p-4 flex flex-col justify-start items-start gap-2'>
+      <div
+        className={`w-full h-1/4 rounded-xl bg-lime-200 p-4 flex flex-col justify-start items-start gap-2 ${
+          etapaActual === EtapasProduccion.CONSTRUCCION &&
+          faseActualConstruccion !== 3 &&
+          'opacity-50'
+        }`}
+      >
         <div className='h-1/5 w-full opacity-60 text-xl flex justify-around relative'>
           <h1 className='absolute left-0'>FASE 3</h1>
           <h1>FÁBRICAS BOLAS</h1>
@@ -118,8 +143,8 @@ function ConfiguracionFabrica() {
               key={`empty-${index}`}
               animationData={lottieVacio}
               loop={true}
-              className='w-24 mx-5 opacity-60'
-              onClick={() => setNBolas(nBolas + 1)}
+              className='w-24 mx-4 opacity-60'
+              onClick={() => setNBolas((PrevNBolas) => PrevNBolas + 1)}
             />
           ))}
         </div>
