@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Matter from 'matter-js'
 import { EtapasProduccion } from '../lib/types'
 
@@ -37,6 +37,7 @@ const TableroGaltonConstruccion = ({
   const boxRef = useRef(null)
   const canvasRef = useRef(null)
   const ballCount = levels * 100
+  const [askForSimulation, setAskForSimulation] = useState(false)
 
   useEffect(() => {
     faseActual === 1 && hasTablero && siguienteFase()
@@ -50,7 +51,7 @@ const TableroGaltonConstruccion = ({
   }, [nPegs, nContainers])
 
   useEffect(() => {
-    faseActual === 3 && nBalls === ballCount && startSimulacion()
+    faseActual === 3 && nBalls === ballCount && setAskForSimulation(true)
   }, [nBalls])
 
   useEffect(() => {
@@ -169,13 +170,28 @@ const TableroGaltonConstruccion = ({
       }}
       className='relative'
     >
-      <canvas ref={canvasRef} />
+      <canvas className={`${askForSimulation && 'opacity-40'}`} ref={canvasRef} />
       {faseActual === 3 && etapaActual === EtapasProduccion.CONSTRUCCION && (
-        <div className='absolute top-4 left-1/2 -translate-x-1/2 text-white text-center text-2xl'>
+        <div
+          className={`absolute top-4 left-1/2 -translate-x-1/2 text-white text-center text-2xl ${
+            askForSimulation && 'opacity-40'
+          }`}
+        >
           Bolas Fabricadas
           <br />
           {nBalls} de {ballCount}{' '}
         </div>
+      )}
+      {askForSimulation && (
+        <button
+          className='absolute p-3 bg-stone-200 rounded-xl text-xl left-1/2 -translate-x-1/2 top-1/2'
+          onClick={() => {
+            setAskForSimulation(false)
+            startSimulacion()
+          }}
+        >
+          Empezar Simulación
+        </button>
       )}
     </div>
   )

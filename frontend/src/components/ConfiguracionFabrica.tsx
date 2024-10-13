@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import lottieFabrica from '../lotties/fabrica.json'
 import lottieVacio from '../lotties/empty.json'
 import Lottie from 'lottie-react'
 import { EtapasProduccion } from '../lib/types'
+import { triggerConstruction } from '../lib/requests'
 
 const MAX_CLAVOS = 4
 const MAX_CONTENEDORES = 4
@@ -11,13 +12,27 @@ const MAX_BOLAS = 8
 function ConfiguracionFabrica({
   etapaActual,
   faseActualConstruccion,
+  startConstruction,
+  levels
 }: {
   etapaActual: EtapasProduccion
   faseActualConstruccion: number
+  startConstruction: boolean
+  levels:number
 }) {
   const [nClavos, setNClavos] = useState<number>(1)
   const [nContenedores, setNContenedores] = useState<number>(1)
   const [nBolas, setNBolas] = useState<number>(1)
+
+  useEffect(() => {
+    startConstruction &&
+      triggerConstruction({
+        nBalls: nBolas,
+        nContainers: nContenedores,
+        nPegs: nClavos,
+        nLevels: levels,
+      })
+  }, [startConstruction])
 
   const isConfiguracion = etapaActual === EtapasProduccion.CONFIGURACION
 

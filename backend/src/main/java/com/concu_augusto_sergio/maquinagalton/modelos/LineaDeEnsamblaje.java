@@ -26,7 +26,7 @@ public class LineaDeEnsamblaje implements Runnable {
     private void ensamblarComponente(ComponenteMaquinaGalton componente) {
         // Simular el tiempo de ensamblaje
         try {
-            Thread.sleep(500); // Simular tiempo de ensamblaje
+            Thread.sleep(50); // Simular tiempo de ensamblaje
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

@@ -23,7 +23,11 @@ public class EstacionDeTrabajo implements Runnable {
         for (int i = 0; i < cantidad; i++) {
             try {
                 // Simular el tiempo de producción
-                TimeUnit.MILLISECONDS.sleep(500);
+                if(componente==ComponenteMaquinaGalton.BOLA){
+                    TimeUnit.MILLISECONDS.sleep(50);
+                }else{
+                    TimeUnit.MILLISECONDS.sleep(600);
+                }
 
                 // Incrementar el contador atómico
                 int numero = contador.incrementAndGet();
