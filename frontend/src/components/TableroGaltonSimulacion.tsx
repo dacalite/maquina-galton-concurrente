@@ -27,7 +27,7 @@ function sample(array: string[]) {
 
 const color = sample(colors) ?? 'yellow'
 
-const TableroGalton = ({
+const TableroGaltonSimulacion = ({
   levels,
   numDividers,
 }: {
@@ -171,7 +171,7 @@ const TableroGalton = ({
       World.add(engine.world, droppedBall)
     }
 
-    /* let count = 0
+    let count = 0
     const intervalId = setInterval(function () {
       if (count === ballCount) {
         clearInterval(intervalId)
@@ -181,7 +181,7 @@ const TableroGalton = ({
       count++
     }, 50)
 
-    return () => clearInterval(intervalId) */
+    return () => clearInterval(intervalId)
   }, [WIDTH, HEIGHT, levels])
 
   return (
@@ -197,4 +197,4 @@ const TableroGalton = ({
   )
 }
 
-export default TableroGalton
+export default TableroGaltonSimulacion
