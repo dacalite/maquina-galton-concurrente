@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Matter from 'matter-js';
 import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs'; // Importar StompJS para WebSocket
+import { Client } from '@stomp/stompjs'; // Importar StompJS para WebSocket a
 
 const BACKGROUND_COLOR = '#000000';
 const FOREGROUND_COLOR = '#555555';
