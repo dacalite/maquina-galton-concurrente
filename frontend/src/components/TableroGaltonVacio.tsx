@@ -21,12 +21,6 @@ const TableroGaltonVacio = ({
 }: TableroGaltonVacioProps) => {
   const boxRef = useRef(null)
   const canvasRef = useRef(null)
-  const [displayControls, setDisplayControls] = useState(true)
-
-  const nextStage = () => {
-    setDisplayControls(false)
-    startConstruction()
-  }
 
   useEffect(() => {
     let Engine = Matter.Engine
@@ -95,7 +89,7 @@ const TableroGaltonVacio = ({
         </div>
         <button
           className='p-3 bg-stone-300 w-full rounded-xl text-xl'
-          onClick={nextStage}
+          onClick={startConstruction}
         >
           Empezar Fabricación
         </button>
