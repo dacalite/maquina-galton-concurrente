@@ -17,10 +17,27 @@ public class FabricaService {
     private final AtomicInteger contadorBolas = new AtomicInteger(0);
     private final AtomicInteger contadorTableros = new AtomicInteger(0);
 
+    public int getContadorClavos() {
+        return contadorClavos.get();
+    }
+
+    public int getContadorContenedores() {
+        return contadorContenedores.get();
+    }
+
+    public int getContadorBolas() {
+        return contadorBolas.get();
+    }
+
+    public int getContadorTableros() {
+        return contadorTableros.get();
+    }
+
     private final BlockingQueue<ComponenteMaquinaGalton> bufferCompartido = new LinkedBlockingQueue<>(10); // Buffer de tamaño 10
     private ScheduledExecutorService scheduler;
 
     public void iniciarProduccion(int niveles, int fabricasClavos, int fabricasContenedores, int fabricasBolas) {
+        // Reiniciar contadores
         contadorTableros.set(0);
         contadorClavos.set(0);
         contadorContenedores.set(0);
@@ -42,7 +59,7 @@ public class FabricaService {
             fase1Latch.await();
 
             // Fase 2: Producir los clavos y contenedores
-            CountDownLatch fase2Latch = new CountDownLatch(2); // Esperamos 2 componentes
+            CountDownLatch fase2Latch = new CountDownLatch(fabricasClavos + fabricasContenedores); // Contar las fábricas de clavos y contenedores
 
             int totalClavos = calcularTotalClavos(niveles);
             int contenedores = niveles + 3;
@@ -78,16 +95,22 @@ public class FabricaService {
 
             // Fase 3: Producir las bolas
             int bolas = calcularNumeroBolas(niveles);
+            System.out.printf("BOLAS TOTALES: " + bolas);
             int bolasPorFabrica = bolas / fabricasBolas;
+            CountDownLatch fase3Latch = new CountDownLatch(fabricasBolas); // Esperar a que todas las fábricas de bolas terminen
             for (int i = 0; i < fabricasBolas; i++) {
                 int inicio = i * bolasPorFabrica;
                 int cantidad = (i == fabricasBolas - 1) ? (bolas - inicio) : bolasPorFabrica;
                 if (cantidad > 0) {
                     scheduler.submit(() -> {
                         new EstacionDeTrabajo(ComponenteMaquinaGalton.BOLA, cantidad, contadorBolas, bufferCompartido).run();
+                        fase3Latch.countDown(); // Indicar que la producción de bolas ha terminado
                     });
                 }
             }
+
+            // Esperar a que la fase 3 termine
+            fase3Latch.await();
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -104,6 +127,6 @@ public class FabricaService {
 
     // Método para calcular el número de bolas en función del tamaño del tablero
     private int calcularNumeroBolas(int niveles) {
-        return niveles * 5;  // Por ejemplo, 5 bolas por cada nivel
+        return niveles * 100;  // Por ejemplo, 5 bolas por cada nivel
     }
 }
