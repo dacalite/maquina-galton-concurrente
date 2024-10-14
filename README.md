@@ -1,4 +1,4 @@
-# 🎲 Galton Board - Simulación Interactiva de Producción en Paralelo
+# 📊 Galton Board - Simulación Interactiva de Producción en Paralelo
 
 Bienvenido a la documentación del proyecto **Galton Board**, una simulación que combina la física de un **Tablero de Galton** con un enfoque de **producción paralela y distribuida**. El proyecto visualiza el proceso de producción de los componentes del tablero, como **clavos, contenedores y bolas**, a través de animaciones y simula su comportamiento físico en el tablero.
 
@@ -7,7 +7,11 @@ Bienvenido a la documentación del proyecto **Galton Board**, una simulación qu
 
 ¡Mira una breve demo del proyecto en acción!
 
-![Demo de Galton Board](https://user-images/demo.mp4) *(Coloca tu video aquí)*
+
+
+https://github.com/user-attachments/assets/4c7adf79-89eb-4830-bcd6-df8b6f9ed889
+
+
 
 
 ## 🚀 Tecnologías Utilizadas
