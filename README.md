@@ -1,4 +1,4 @@
-# 📊 Galton Board - Simulación Interactiva de Producción en Paralelo
+# 📊 Galton Board - Simulación Interactiva de Producción en Paralelo (Actualizado con RabbitMQ)
 
 Bienvenido a la documentación del proyecto **Galton Board**, una simulación que combina la física de un **Tablero de Galton** con un enfoque de **producción paralela y distribuida**. El proyecto visualiza el proceso de producción de los componentes del tablero, como **clavos, contenedores y bolas**, a través de animaciones y simula su comportamiento físico en el tablero.
 
@@ -27,6 +27,7 @@ https://github.com/user-attachments/assets/4c7adf79-89eb-4830-bcd6-df8b6f9ed889
 - **Java Concurrent API**: Usada para implementar la ejecución paralela de las fábricas y la gestión de recursos compartidos.
 - **ScheduledExecutorService**: Para el control eficiente del scheduling y ejecución de tareas en paralelo.
 - **CountDownLatch** y **AtomicInteger**: Para la correcta sincronización entre hilos y la prevención de condiciones de carrera.
+- **RabbitMQ**: Para la gestión de productores y consumidores así como la cola de producción y ensamblaje de manera más profesional.
 
 ### 🐳 **Docker**:
 - **Docker**: Utilizado para contenerizar tanto el backend como el frontend, asegurando la portabilidad y consistencia en cualquier entorno.
