@@ -1,32 +1,20 @@
 package com.concu_augusto_sergio.maquinagalton.modelos;
 
-import java.util.concurrent.BlockingQueue;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Service;
 
-public class LineaDeEnsamblaje implements Runnable {
+@Service
+public class LineaDeEnsamblaje {
 
-    private final BlockingQueue<ComponenteMaquinaGalton> bufferCompartido;
-
-    public LineaDeEnsamblaje(BlockingQueue<ComponenteMaquinaGalton> bufferCompartido) {
-        this.bufferCompartido = bufferCompartido;
-    }
-
-    @Override
-    public void run() {
-        try {
-            while (true) {
-                // Extraer un componente del buffer (espera si está vacío)
-                ComponenteMaquinaGalton componente = bufferCompartido.take();
-                ensamblarComponente(componente);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    @RabbitListener(queues = "componentesQueue") // Escucha en la cola de componentes
+    public void recibirComponente(ComponenteMaquinaGalton componente) {
+        ensamblarComponente(componente);
     }
 
     private void ensamblarComponente(ComponenteMaquinaGalton componente) {
         // Simular el tiempo de ensamblaje
         try {
-            Thread.sleep(50); // Simular tiempo de ensamblaje
+            Thread.sleep(50); // Simula el tiempo de ensamblaje
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

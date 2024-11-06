@@ -1,4 +1,14 @@
 services:
+  rabbit_mq:
+    image: rabbitmq:3.10.6-management
+    restart: no
+    container_name: galton_rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
@@ -6,6 +16,8 @@ services:
     container_name: galton_backend
     ports:
       - 8080:8080
+    depends_on:
+      - rabbit_mq
     networks:
       - app-network
 
