@@ -24,9 +24,11 @@ COPY frontend/ ./
 WORKDIR /app/backend
 COPY backend/target/maquinagalton-0.0.1-SNAPSHOT.jar ./
 
-# Exponemos los puertos del backend y frontend
+# Exponemos los puertos del backend, frontend y RabbitMQ
 EXPOSE 8080
 EXPOSE 5173
+EXPOSE 5672
+EXPOSE 15672
 
 # Comando para ejecutar el backend y el frontend cuando el contenedor arranca
 CMD ["sh", "-c", "java -Djava.security.egd=file:/dev/urandom -jar /app/backend/maquinagalton-0.0.1-SNAPSHOT.jar & npm run dev --prefix /app/frontend"]
